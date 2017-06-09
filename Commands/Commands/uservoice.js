@@ -158,7 +158,7 @@ commands.comment = {
             description: (data.comment.suggestion.text !== null) ? ((data.comment.suggestion.text.length < 1900) ? entities.decode(data.comment.suggestion.text) : '*Content too long*') : '*No content*',
             color: 0x3498db,
             author: {
-              name: entities.decode(data.comment.suggestion.creator.name),
+              name: data.comment.suggestion.creator.name,
               url: data.comment.suggestion.creator.url,
               icon_url: data.comment.suggestion.creator.avatar_url
             },
