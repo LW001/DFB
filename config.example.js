@@ -22,6 +22,7 @@ let Config = {
   },
   timeouts: {
     messageDelete: 2000, // 2 seconds
+    errorMessageDelete: 5000, // 5 seconds
     duplicateConfirm: 15000 // 15 seconds
   }
 }
