@@ -21,7 +21,7 @@ let Config = {
     forumName: 'test' // URL name of suggestions forum
   },
   timeouts: {
-    messageDelete: 20000, // 20 seconds
+    messageDelete: 2000, // 2 seconds
     duplicateConfirm: 15000 // 15 seconds
   }
 }
