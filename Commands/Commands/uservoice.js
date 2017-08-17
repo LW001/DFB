@@ -240,6 +240,107 @@ commands.comment = {
     })
   }
 }
+
+commands.status = {
+  adminOnly: true,
+  modOnly: false,
+  fn: function (bot, msg, suffix, uvClient, cBack) {
+    msg.channel.sendTyping()
+    getMail(uvClient, msg.author.id).then(email => {
+      uvClient.v1.loginAs(email).then(c => {
+        let s = suffix.split(' ')
+        let idt = s[0]
+        let status = s[1]
+        s.shift()
+        s.shift()
+        if (status.toLowerCase() === 'under') {
+          s.shift()
+          status = 'under review'
+        }
+        let content = s.join(' ')
+        let parts = idt.match(UVRegex)
+        let id
+        if (parts === null) {
+            id = idt
+        } else {
+            id = parts[2]
+        }
+        if (content.startsWith('|')) content = content.slice(1).trim()
+        c.put(`forums/${config.uservoice.forumId}/suggestions/${id}/respond.json`, {
+          response: {
+            status: status,
+            text: content
+          }
+        }).then(data => {
+          status = status.toLowerCase().split(' ').map(function(word) {
+            return word.replace(word[0], word[0].toUpperCase());
+          }).join(' ');
+          msg.reply('status was updated.', false, {
+            title: entities.decode(data.suggestion.title),
+            url: data.suggestion.url,
+            description: (data.suggestion.text !== null) ? ((data.suggestion.text.length < 1900) ? entities.decode(data.suggestion.text) : '*Content too long*') : '*No content*',
+            color: 0x3498db,
+            author: {
+              name: entities.decode(data.suggestion.creator.name),
+              url: data.suggestion.creator.url,
+              icon_url: data.suggestion.creator.avatar_url
+            },
+            fields: [
+              {
+                name: `${msg.author.username} has updated the status to ${status}`,
+                value: content,
+                inline: false
+              }
+            ]
+          }).then(successmsg => {
+              setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.messageDelete)
+          })
+            cBack({
+                affected: id,
+                result: `Suggestion status was updated to ${status}`
+            })
+        }).catch(e => {
+            if (e.statusCode === 404) {
+                msg.reply('unable to find a suggestion using your query.').then(errmsg => {
+                    setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+                })
+            } else {
+                logger.log(bot, {
+                    cause: 'status_update',
+                    message: (e.message !== undefined) ? e.message : JSON.stringify(e)
+                }, e)
+                msg.reply('an error occured, please try again later.').then(errmsg => {
+                    setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+                })
+            }
+        })
+      }).catch(e => {
+        logger.log(bot, {
+          cause: 'login_as',
+          message: (e.message !== undefined) ? e.message : JSON.stringify(e)
+        }, e)
+        msg.reply('an error occured, please try again later.').then(errmsg => {
+          setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+        })
+      })
+    }).catch(e => {
+      if (e === 'Not found') {
+        msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(errmsg => {
+          setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+        })
+      } else {
+        logger.log(bot, {
+          cause: 'email_search',
+          message: (e.message !== undefined) ? e.message : JSON.stringify(e)
+        }, e)
+        msg.reply('an error occured, please try again later.').then(errmsg => {
+          setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+        })
+      }
+    })
+  }
+}
+
 commands.url = {
   adminOnly: false,
   modOnly: false,
