@@ -293,12 +293,12 @@ commands.status = {
               }
             ]
           }).then(successmsg => {
-              setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.messageDelete)
+            setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.messageDelete)
           })
-            cBack({
-              affected: id,
-              result: `Suggestion status was updated to ${status}`
-            })
+          cBack({
+            affected: id,
+            result: `Suggestion status was updated to ${status}`
+          })
         }).catch(e => {
           if (e.statusCode === 404) {
             msg.reply('unable to find a suggestion using your query.').then(errmsg => {
