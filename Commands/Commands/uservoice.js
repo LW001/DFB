@@ -261,9 +261,9 @@ commands.status = {
         let parts = idt.match(UVRegex)
         let id
         if (parts === null) {
-            id = idt
+          id = idt
         } else {
-            id = parts[2]
+          id = parts[2]
         }
         if (content.startsWith('|')) content = content.slice(1).trim()
         c.put(`forums/${config.uservoice.forumId}/suggestions/${id}/respond.json`, {
@@ -296,23 +296,23 @@ commands.status = {
               setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.messageDelete)
           })
             cBack({
-                affected: id,
-                result: `Suggestion status was updated to ${status}`
+              affected: id,
+              result: `Suggestion status was updated to ${status}`
             })
         }).catch(e => {
-            if (e.statusCode === 404) {
-                msg.reply('unable to find a suggestion using your query.').then(errmsg => {
-                    setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
-                })
-            } else {
-                logger.log(bot, {
-                    cause: 'status_update',
-                    message: (e.message !== undefined) ? e.message : JSON.stringify(e)
-                }, e)
-                msg.reply('an error occured, please try again later.').then(errmsg => {
-                    setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
-                })
-            }
+          if (e.statusCode === 404) {
+            msg.reply('unable to find a suggestion using your query.').then(errmsg => {
+              setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+            })
+          } else {
+            logger.log(bot, {
+              cause: 'status_update',
+              message: (e.message !== undefined) ? e.message : JSON.stringify(e)
+            }, e)
+            msg.reply('an error occured, please try again later.').then(errmsg => {
+              setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+            })
+          }
         })
       }).catch(e => {
         logger.log(bot, {
