@@ -86,7 +86,7 @@ commands.dupe = {
       })
       return
     }
-    if (suffix.split(' ')[0].length < 1 || suffix.split(' ')[1].length < 1) {
+    if (suffix.split(' ').length <= 1) {
       msg.reply("you're missing parameters, please review <#268812893087203338>").then(errmsg => {
         setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
       })
@@ -119,6 +119,11 @@ commands.dupe = {
       } else {
         return msg.reply("you attempted to use your previously used link, but you didn't submit one.")
       }
+    }
+    if (id === null) {
+      msg.reply("you're missing parameters, please review <#268812893087203338>").then(errmsg => {
+        setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+      })
     }
     if (id === id2) {
       return msg.reply("you cannot merge 2 of the same suggestions.")
