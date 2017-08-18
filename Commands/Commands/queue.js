@@ -86,7 +86,7 @@ commands.dupe = {
       })
       return
     }
-    if (suffix.split(' ').length <= 1) {
+    if (suffix.split(' ').length < 2) {
       msg.reply("you're missing parameters, please review <#268812893087203338>").then(errmsg => {
         setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
       })
