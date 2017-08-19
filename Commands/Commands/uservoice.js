@@ -248,16 +248,12 @@ commands.status = {
     msg.channel.sendTyping()
     getMail(uvClient, msg.author.id).then(email => {
       uvClient.v1.loginAs(email).then(c => {
-        let s = suffix.split(' ')
+        let s = suffix.split(' | ')
         let idt = s[0]
         let status = s[1]
         s.shift()
         s.shift()
-        if (status.toLowerCase() === 'under') {
-          s.shift()
-          status = 'under review'
-        }
-        let content = s.join(' ')
+        let content = s.join(' | ')
         let parts = idt.match(UVRegex)
         let id
         if (parts === null) {
@@ -265,7 +261,6 @@ commands.status = {
         } else {
           id = parts[2]
         }
-        if (content.startsWith('|')) content = content.slice(1).trim()
         c.put(`forums/${config.uservoice.forumId}/suggestions/${id}/respond.json`, {
           response: {
             status: status,
