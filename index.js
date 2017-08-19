@@ -12,6 +12,8 @@ const bot = new Discordie({
   autoReconnect: true
 })
 
+var limits = require('./limit.js')
+var commandLimitMap = new Map()
 var bugsnag = require('bugsnag')
 if (Config.debug === true) {
   let releaseLocation = "development"
@@ -74,7 +76,20 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
           if (Commands[cmd].phantom !== undefined) msg.reply('this command is restricted, and not available to you.')
           return
         } else if (level !== 2 && Commands[cmd].adminOnly === true) return
+        if (limits.user[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.user[cmd] && level === 0) {
+          msg.reply('this command is on cooldown.').then(rl => {
+            setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
+          })
+          return
+        }
+        if (limits.mod[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.mod[cmd] && level === 1) {
+          msg.reply('this command is on cooldown.').then(rl => {
+            setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
+          })
+          return
+        }
         try {
+          commandLimitMap.set(msg.author.id+cmd, Date.now())
           Commands[cmd].fn(bot, msg, suffix, uvClient, function (res) {
             GenericLog.log(bot, c.message.author, {
               message: `Ran the command \`${cmd}\``,
