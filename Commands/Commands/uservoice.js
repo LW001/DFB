@@ -55,8 +55,8 @@ commands.vote = {
       })
     }).catch(e => {
       if (e === 'Not found') {
-        msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(errmsg => {
-          setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+        msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(() => {
+          setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.errorMessageDelete)
         })
       } else {
         logger.log(bot, {
@@ -134,8 +134,8 @@ commands.submit = {
         })
       }).catch(e => {
         if (e === 'Not found') {
-          msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(errmsg => {
-            setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+          msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(() => {
+            setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.errorMessageDelete)
           })
         } else {
           logger.log(bot, {
@@ -225,8 +225,8 @@ commands.comment = {
       })
     }).catch(e => {
       if (e === 'Not found') {
-        msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(errmsg => {
-          setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+        msg.reply(`I was unable to find your details, make sure you've logged into the website at <https://${config.uservoice.subdomain}.${config.uservoice.domain}> at least once.`).then(() => {
+          setTimeout(() => bot.Messages.deleteMessages([msg]), config.timeouts.errorMessageDelete)
         })
       } else {
         logger.log(bot, {
@@ -356,8 +356,8 @@ commands.info = {
               let id = data.users[0].id
               getInfo(id, userid, null)
             } else {
-              return msg.channel.sendMessage('User could not be found on UserVoice, make sure they have logged into the Feedback site at least once.').then(errMsg => {
-                setTimeout(() => bot.Messages.deleteMessages([msg, errMsg]), config.timeouts.errorMessageDelete)
+              return msg.channel.sendMessage('User could not be found on UserVoice, make sure they have logged into the Feedback site at least once.').then(errmsg => {
+                setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
               })
             }
           }).catch(() => {
