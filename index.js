@@ -56,6 +56,12 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
           if (Commands[cmd].phantom !== undefined) msg.reply('this command is restricted, and not available to you.')
           return
         } else if (level !== 2 && Commands[cmd].adminOnly === true) return
+        if (limits.global[cmd] && Date.now() - commandLimitMap.get('global') < limits.global[cmd] && level !== 2) {
+          msg.reply('this command is on a global cooldown. Try again in a bit.').then(rl => {
+            setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
+          })
+          return
+        }
         if (limits.user[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.user[cmd] && level === 0) {
           msg.reply('this command is on cooldown.').then(rl => {
             setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
@@ -70,6 +76,7 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
         }
         try {
           commandLimitMap.set(msg.author.id+cmd, Date.now())
+          commandLimitMap.set('global', Date.now())
           Commands[cmd].fn(bot, msg, suffix, uvClient, (res) => {
             genlog.log(bot, c.message.author, {
               message: `Ran the command \`${cmd}\``,
