@@ -16,5 +16,14 @@ module.exports = {
     vote: 1000,
     help: 1000,
     stats: 1000
+  },
+  global: {
+    comment: 500,
+    submit: 500,
+    info: 500,
+    url: 500,
+    vote: 100,
+    help: 500,
+    stats: 500
   }
 }
