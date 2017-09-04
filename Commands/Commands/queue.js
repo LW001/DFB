@@ -1,17 +1,16 @@
-var commands = []
+let commands = []
 const Dash = require('rethinkdbdash')
 const r = new Dash()
-var checker = require('../../Utils/access_checker')
-var logger = require('../../Utils/error_loggers')
-var genlog = require('../../Utils/generic_logger')
-var config = require('../../config.js')
-var bugsnag = require('bugsnag')
+const checker = require('../../Utils/access_checker')
+const logger = require('../../Utils/error_loggers')
+const genlog = require('../../Utils/generic_logger')
+const config = require('../../config.js')
+const Entities = require('html-entities').AllHtmlEntities
+const entities = new Entities()
 
-var dupeMap = new Map()
+const dupeMap = new Map()
 
-var UVRegex = /https?:\/\/[\w.]+\/forums\/(\d{6,})-[\w-]+\/suggestions\/(\d{8,})(?:-[\w-]*)?/
-
-bugsnag.register(config.discord.bugsnag)
+const UVRegex = /https?:\/\/[\w.]+\/forums\/(\d{6,})-[\w-]+\/suggestions\/(\d{8,})(?:-[\w-]*)?/
 
 commands.newCardInit = {
   internal: true,
@@ -32,7 +31,7 @@ commands.newCardInit = {
         id: '302138464986595339',
         name: 'upvote'
       })
-    }).catch(bugsnag.notify)
+    }).catch(logger.raven)
   }
 }
 
@@ -48,15 +47,15 @@ commands.chatVoteInit = {
         embed: {
           color: 0x3498db,
           author: {
-            name: data.suggestion.creator.name,
-            icon_url: data.suggestion.creator.avatar_url,
-            url: data.suggestion.creator.url
+            name: (data.suggestion.creator) ? entities.decode(data.suggestion.creator.name) : 'Anonymous',
+            url: (data.suggestion.creator) ? data.suggestion.creator.url : undefined,
+            icon_url: (data.suggestion.creator) ? data.suggestion.creator.avatar_url : 'https://assets1.uvcdn.com/pkg/admin/icons/user_70-62136f6de7efc58cc79dabcfed799c01.png' // This is the default UV avatar
           },
-          title: data.suggestion.title,
-          description: (data.suggestion.text.length < 1900) ? data.suggestion.text : '*Content too long*',
+          title: entities.decode(data.suggestion.title),
+          description: data.suggestion.text ? (data.suggestion.text.length < 1900) ? entities.decode(data.suggestion.text) : '*Content too long*' : '*No content*',
           url: data.suggestion.url,
           footer: {
-            text: (data.suggestion.category !== null) ? data.suggestion.category.name : 'No category'
+            text: (data.suggestion.category) ? entities.decode(data.suggestion.category.name) : 'No category'
           }
         },
         reporters: [],
@@ -70,7 +69,7 @@ commands.chatVoteInit = {
           id: '302138464986595339',
           name: 'upvote'
         })
-      }).catch(bugsnag.notify)
+      }).catch(logger.raven)
     })
   }
 }
@@ -134,18 +133,19 @@ commands.dupe = {
               msg.reply(`this will result in the following card.\n__Are you sure this is correct?__ (yes/no)`, false, {
                 color: 0x3498db,
                 author: {
-                  name: data2.suggestion.creator.name,
+                  name: entities.decode(data2.suggestion.creator.name),
                   icon_url: data2.suggestion.creator.avatar_url,
                   url: data2.suggestion.creator.url
                 },
-                title: data2.suggestion.title,
-                description: (data2.suggestion.text !== null) ? (data2.suggestion.text.length < 1900) ? data2.suggestion.text : '*Content too long*' : '*No content*',
+                title: entities.decode(data2.suggestion.title),
+                url: data2.suggestion.url,
+                description: (data2.suggestion.text !== null) ? (data2.suggestion.text.length < 1900) ? entities.decode(data2.suggestion.text) : '*Content too long*' : '*No content*',
                 fields: [{
                   name: 'Votes',
                   value: parseInt(data.suggestion.vote_count) + parseInt(data2.suggestion.vote_count)
                 }],
                 footer: {
-                  text: (data2.suggestion.category !== null) ? data2.suggestion.category.name : 'No category'
+                  text: (data2.suggestion.category !== null) ? entities.decode(data2.suggestion.category.name) : 'No category'
                 }
               }).then(() => {
                 wait(bot, msg).then((q) => {
@@ -171,12 +171,12 @@ commands.dupe = {
                       color: 0x3498db,
                       fields: [{
                         name: `Merge Candidate: ${(data.suggestion.text !== null) ? (data.suggestion.text.length < 500) ? 'Content' : 'Summary' : 'Content'}`,
-                        value: (data.suggestion.text !== null) ? (data.suggestion.text.length < 500) ? data.suggestion.text : `${data.suggestion.text.substring(0, 500)}` : '*No content*',
+                        value: (data.suggestion.text !== null) ? (data.suggestion.text.length < 500) ? data.suggestion.text : `${entities.decode(data.suggestion.text.substring(0, 500))}` : '*No content*',
                         inline: false
                       },
                       {
                         name: `Target Card: ${(data2.suggestion.text !== null) ? (data2.suggestion.text.length < 500) ? 'Content' : 'Summary' : 'Content'}`,
-                        value: (data2.suggestion.text !== null) ? (data2.suggestion.text.length < 500) ? data2.suggestion.text : `${data2.suggestion.text.substring(0, 500)}` : '*No content*',
+                        value: (data2.suggestion.text !== null) ? (data2.suggestion.text.length < 500) ? data2.suggestion.text : `${entities.decode(data2.suggestion.text.substring(0, 500))}` : '*No content*',
                         inline: false
                       },
                       {
@@ -200,10 +200,10 @@ commands.dupe = {
                         inline: true
                       }
                       ],
-                      title: data2.suggestion.title,
+                      title: entities.decode(data2.suggestion.title),
                       description: `These suggestions will be merged.\n[Target Card](${data2.suggestion.url})\n[Merge Candidate](${data.suggestion.url})`,
                       footer: {
-                        text: data2.suggestion.category.name
+                        text: entities.decode(data2.suggestion.category.name)
                       }
                     }).then(b => {
                       r.db('DFB').table('queue').insert({
@@ -227,7 +227,7 @@ commands.dupe = {
                           name: 'reverse',
                           id: '322646981476614144'
                         })
-                      }).catch(bugsnag.notify)
+                      }).catch(logger.raven)
                     })
                   }
                 })
@@ -264,7 +264,7 @@ commands.dupe = {
           })
         })
       }
-    }).catch(bugsnag.notify)
+    }).catch(logger.raven)
   }
 }
 
@@ -376,7 +376,7 @@ commands.registerVote = {
                         name: 'f1'
                       }, user.id))
                     })
-                  }, 2500))
+                  }, 500))
                 }
               }).catch(e => {
                 if (e.statusCode === 404) {
@@ -413,7 +413,7 @@ commands.registerVote = {
             })
           })
         }
-        r.db('DFB').table('queue').get(doc.id).update(doc).run().catch(bugsnag.notify)
+        r.db('DFB').table('queue').get(doc.id).update(doc).run().catch(logger.raven)
         break
       }
       case 'newCard': {
@@ -473,7 +473,7 @@ commands.registerVote = {
                         name: 'f1'
                       }, user.id))
                     })
-                  }, 2500))
+                  }, 500))
                 }
               }).catch(e => {
                 if (e.statusCode === 404) {
@@ -510,7 +510,7 @@ commands.registerVote = {
             })
           })
         }
-        r.db('DFB').table('queue').get(doc.id).update(doc).run().catch(bugsnag.notify)
+        r.db('DFB').table('queue').get(doc.id).update(doc).run().catch(logger.raven)
         break
       }
       case 'adminReviewDelete': {
@@ -593,7 +593,7 @@ commands.registerVote = {
             setTimeout(() => bot.Messages.deleteMessages([o.id, msg.id], bot.Channels.find(c => c.name === 'admin-queue').id), config.timeouts.messageDelete)
           })
           deleteFromUV(doc.UvId, uv, bot)
-          r.db('DFB').table('queue').get(doc.id).delete().run().catch(bugsnag.notify)
+          r.db('DFB').table('queue').get(doc.id).delete().run().catch(logger.raven)
         }
         break
       }
@@ -621,7 +621,7 @@ commands.registerVote = {
               message: body
             }, e)
           })
-          r.db('DFB').table('queue').get(doc.id).delete().run().catch(bugsnag.notify)
+          r.db('DFB').table('queue').get(doc.id).delete().run().catch(logger.raven)
         } else if (reaction.id === '322646981476614144') {
           genlog.log(bot, user, {
             message: 'Approved a report',
@@ -636,12 +636,12 @@ commands.registerVote = {
               message: e.message
             }, e)
           })
-          r.db('DFB').table('queue').get(doc.id).delete().run().catch(bugsnag.notify)
+          r.db('DFB').table('queue').get(doc.id).delete().run().catch(logger.raven)
         }
         break
       }
       }
-    }).catch(bugsnag.notify)
+    }).catch(logger.raven)
   }
 }
 
@@ -699,7 +699,7 @@ function switchIDs (og, bot) {
         name: 'thinkBot',
         id: '285445175541497859'
       })
-    }).catch(bugsnag.notify)
+    }).catch(logger.raven)
   })
 }
 
@@ -724,7 +724,7 @@ function wait (bot, msg) {
   let yn = /^y(es)?$|^n(o)?$/i
   return new Promise((resolve, reject) => {
     bot.Dispatcher.on('MESSAGE_CREATE', function doStuff (c) {
-      var time = setTimeout(() => {
+      let time = setTimeout(() => {
         resolve(null)
         bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
       }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser
@@ -744,7 +744,7 @@ function waitID (bot, user, channel) {
   let yn = /^y(es)?$|^n(o)?$/i
   return new Promise((resolve, reject) => {
     bot.Dispatcher.on('MESSAGE_CREATE', function doStuff (c) {
-      var time = setTimeout(() => {
+      let time = setTimeout(() => {
         resolve(null)
         bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
       }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser

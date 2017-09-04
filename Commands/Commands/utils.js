@@ -1,15 +1,12 @@
-var commands = []
+let commands = []
 
-// var checker = require('../../Utils/access_checker')
-// var logger = require('../../Utils/error_loggers')
-var config = require('../../config.js')
-var analytics = require('../../Utils/orwell.js')
-var bugsnag = require('bugsnag')
+// const checker = require('../../Utils/access_checker')
+const logger = require('../../Utils/error_loggers')
+const config = require('../../config.js')
+const analytics = require('../../Utils/orwell.js')
 const Dash = require('rethinkdbdash')
 const r = new Dash()
 const roles = require('../../roles')
-
-bugsnag.register(config.discord.bugsnag)
 
 commands.ping = {
   phantom: true,
@@ -49,13 +46,11 @@ commands['streak-mod'] = {
     msg.channel.sendTyping()
     let parts = suffix.split(' ')
     analytics.getPoints(parts[0]).then(data => {
-      let now = new Date()
-      let today = new Date(now.getFullYear(), now.getUTCMonth(), now.getUTCDate()).getTime()
       if (data === null) return msg.reply('no data for this user, cannot edit.')
       let moment = require('moment')
       let newstreak = []
       for (let x = parseInt(parts[1]); x !== 0; x--) {
-        let date = new Date(moment(today).subtract(x, 'days')).getTime().toString()
+        let date = new Date(moment().startOf('day').subtract(x, 'days')).getTime().toString()
         newstreak.push(date)
       }
       analytics.arbitraryEdit(parts[0], newstreak).then(() => {
@@ -121,19 +116,28 @@ commands.stats = {
           inline: true
         }
       )
-      msg.author.openDM().then((e) => {
-        e.sendMessage('', false, {
+      msg.author.openDM().then((dm) => {
+        dm.sendMessage('', false, {
           color: 0x59f442,
           title: `${msg.author.username} - Statistics`,
           thumbnail: {
             url: msg.author.staticAvatarURL
           },
           fields: field
-        }).catch(bugsnag.notify) // Send Message to DM error
-      }).then(msg.delete()).catch(bugsnag.notify) // Error opening DM channel
+        }).catch((e) => {
+          if (e.code === 50007) { // 50007 is the discord json code for not being able to send a DM to a user.
+            msg.reply("Unable to DM you any stats. Maybe you don't have DM's enabled?").then(errmsg => {
+              setTimeout(() => bot.Messages.deleteMessages([msg, errmsg]), config.timeouts.errorMessageDelete)
+            })
+          } else {
+            msg.reply('an unexpected error occured while getting your stats, try again later.')
+            logger.raven(e)
+          }
+        }) // Send Message to DM error
+      }).then(msg.delete()).catch(logger.raven) // Error opening DM channel
     }).catch(e => {
       msg.reply('an unexpected error occured while getting your stats, try again later.')
-      console.error(e)
+      logger.raven(e)
     })
   }
 }
@@ -165,7 +169,7 @@ commands['stats-reset'] = {
                     r.db('DFB').table('analytics').get(suffix).delete().run().then(() => {
                       msg.channel.sendMessage(`Stats for ${suffix} are deleted.`)
                     }).catch(e => {
-                      bugsnag.notify(e)
+                      logger.raven(e)
                       msg.channel.sendMessage(`Failed to delete stats for ${suffix}`)
                     })
                   }
@@ -244,7 +248,7 @@ commands.lookup = {
       })
     }).catch(e => {
       msg.reply('an unexpected error occured while getting your stats, try again later.')
-      console.error(e)
+      logger.raven(e)
     })
   }
 }
@@ -277,7 +281,7 @@ function wait (bot, msg) {
   let yn = /^y(es)?$|^n(o)?$/i
   return new Promise((resolve, reject) => {
     bot.Dispatcher.on('MESSAGE_CREATE', function doStuff (c) {
-      var time = setTimeout(() => {
+      let time = setTimeout(() => {
         resolve(null)
         bot.Dispatcher.removeListener('MESSAGE_CREATE', doStuff)
       }, config.timeouts.duplicateConfirm) // We won't wait forever for the person to anwser
