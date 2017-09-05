@@ -12,7 +12,7 @@ const bot = new Discordie({
   autoReconnect: true
 })
 
-var limits = require('./limit.js')
+const limits = require('./limit.js')
 var commandLimitMap = new Map()
 
 const UVRegex = /https?:\/\/[\w.]+\/forums\/(\d{6,})-[\w-]+\/suggestions\/(\d{7,})(?:-[\w-]*)?/
