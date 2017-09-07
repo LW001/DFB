@@ -56,19 +56,19 @@ bot.Dispatcher.on(Events.MESSAGE_CREATE, (c) => {
           if (Commands[cmd].phantom !== undefined) msg.reply('this command is restricted, and not available to you.')
           return
         } else if (level !== 2 && Commands[cmd].adminOnly === true) return
-        if (limits.global[cmd] && Date.now() - commandLimitMap.get('global') < limits.global[cmd] && level !== 2) {
+        if (commandLimitMap.has('global') && limits.global[cmd] && Date.now() - commandLimitMap.get('global') < limits.global[cmd] && level !== 2) {
           msg.reply('this command is on a global cooldown. Try again in a bit.').then(rl => {
             setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
           })
           return
         }
-        if (limits.user[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.user[cmd] && level === 0) {
+        if (commandLimitMap.has(msg.author.id+cmd) && limits.user[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.user[cmd] && level === 0) {
           msg.reply('this command is on cooldown.').then(rl => {
             setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
           })
           return
         }
-        if (limits.mod[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.mod[cmd] && level === 1) {
+        if (commandLimitMap.has(msg.author.id+cmd) && limits.mod[cmd] && Date.now() - commandLimitMap.get(msg.author.id+cmd) < limits.mod[cmd] && level === 1) {
           msg.reply('this command is on cooldown.').then(rl => {
             setTimeout(() => bot.Messages.deleteMessages([msg, rl]), Config.timeouts.errorMessageDelete)
           })
