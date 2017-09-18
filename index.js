@@ -11,8 +11,6 @@ const Analytics = require('./Utils/orwell')
 const bot = new Discordie({
   autoReconnect: true
 })
-const RLRemaining = null
-const RLReset = null
 
 const UVRegex = /https?:\/\/[\w.]+\/forums\/(\d{6,})-[\w-]+\/suggestions\/(\d{7,})(?:-[\w-]*)?/
 

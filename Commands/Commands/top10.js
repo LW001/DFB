@@ -3,6 +3,7 @@ const config = require('../../config.js')
 const entities = new Entities()
 const Dash = require('rethinkdbdash')
 const r = new Dash()
+const rl = require('../../Utils/ratelimiting')
 
 let commands = []
 
@@ -40,6 +41,7 @@ function generateTop (bot, uv) {
       f.get(`forums/${config.uservoice.forumId}/suggestions.json`, {
         per_page: 25
       }).then(data => {
+        rl.updateRL(data.headers['X-Rate-Limit-Limit'],data.headers['X-Rate-Limit-Remaining'],data.headers['X-Rate-Limit-Reset'])
         for (let suggestion of data.suggestions) {
           if (counter === 10) break
           if (!suggestion.status || suggestion.status && suggestion.status.name !== 'completed') {

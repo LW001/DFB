@@ -5,6 +5,7 @@ const logger = require('../../Utils/error_loggers')
 const config = require('../../config.js')
 const Entities = require('html-entities').AllHtmlEntities
 const UVRegex = /https?:\/\/[\w.]+\/forums\/(\d{6,})-[\w-]+\/suggestions\/(\d{7,})(?:-[\w-]*)?/
+const rl = require('../../Utils/ratelimiting')
 
 const entities = new Entities()
 
@@ -25,6 +26,7 @@ commands.vote = {
         c.post(`forums/${config.uservoice.forumId}/suggestions/${id}/votes.json`, {
           to: 1
         }).then((s) => {
+          rl.updateRL(s.headers['X-Rate-Limit-Limit'],s.headers['X-Rate-Limit-Remaining'],s.headers['X-Rate-Limit-Reset'])
           msg.reply('vote registered, thanks!')
           cBack({
             affected: id
@@ -95,6 +97,7 @@ commands.submit = {
               category_id: channels[msg.channel.id]
             }
           }).then(data => {
+            rl.updateRL(data.headers['X-Rate-Limit-Limit'],data.headers['X-Rate-Limit-Remaining'],data.headers['X-Rate-Limit-Reset'])
             msg.reply('your feedback has been submitted!', false, {
               color: 0x3498db,
               author: {
@@ -175,6 +178,7 @@ commands.comment = {
             text: content
           }
         }).then(data => {
+          rl.updateRL(data.headers['X-Rate-Limit-Limit'],data.headers['X-Rate-Limit-Remaining'],data.headers['X-Rate-Limit-Reset'])
           msg.reply('your comment was added.', false, {
             title: entities.decode(data.comment.suggestion.title),
             url: data.comment.suggestion.url,
@@ -273,6 +277,7 @@ commands.info = {
           }).then(response => {
             latestSuggLink = response.suggestions[0].url
             latestSuggTitle = response.suggestions[0].title
+            rl.updateRL(response.headers['X-Rate-Limit-Limit'],response.headers['X-Rate-Limit-Remaining'],response.headers['X-Rate-Limit-Reset'])
             return msg.channel.sendMessage(`Information for User ${data.user.name}:`, false, {
               color: 0xfc9822,
               title: `${data.user.name} - UserVoice`,
